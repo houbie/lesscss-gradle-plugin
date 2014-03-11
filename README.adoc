@@ -1,0 +1,5 @@
+Asciidoctor Gradle Plugin
+=========================
+:version: 0.1-less-1.7.0-SNAPSHOT
+
+A gradle plugin for compiling LESS to CSS

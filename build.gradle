@@ -1,0 +1,122 @@
+apply plugin: 'groovy'
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+apply plugin: 'release'
+
+version = file('version.txt').text.split('=')[1].trim()
+group = 'com.github.houbie'
+
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile localGroovy()
+    compile gradleApi()
+	compile 'com.github.houbie:lesscss:1.1.0-less-1.7.0'
+    testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
+}
+
+jar {
+    from 'LICENSE', 'NOTICE'
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+artifacts {
+    archives jar
+    archives javadocJar
+    archives sourcesJar
+}
+
+//********* artifact signing and publishing *********
+
+task uploadSnapshot(description: 'Uploads a snapshot to the Sonatype repository', dependsOn: uploadArchives)
+
+// the release task spawns a new GradleBuild that doesn't contain release itself, but it contains createReleaseTag
+def sonatypeRelease = gradle.startParameter.taskNames.contains('createReleaseTag')
+def sonatypeSnapshot = gradle.startParameter.taskNames.contains('uploadSnapshot')
+if (sonatypeRelease) {
+    signing {
+        sign configurations.archives
+    }
+}
+def sonatypeRepositoryUrl = sonatypeRelease ? 'https://oss.sonatype.org/service/local/staging/deploy/maven2/' : 'https://oss.sonatype.org/content/repositories/snapshots/'
+
+uploadArchives {
+    repositories {
+        if (!(sonatypeRelease || sonatypeSnapshot)) {
+            mavenLocal()
+        } else {
+            mavenDeployer {
+                if (sonatypeRelease) {
+                    beforeDeployment { deployment -> signing.signPom(deployment) }
+                }
+
+                repository(url: sonatypeRepositoryUrl) {
+                    authentication(userName: sonatypeUsername, password: sonatypePassword)
+                }
+
+                pom.project {
+                    name project.name
+                    packaging 'jar'
+                    description 'Lesscss is a java wrapper for the JavaScript LESS to CSS compiler'
+                    url 'https://github.com/houbie/lesscss'
+
+                    scm {
+                        url 'scm:git@github.com:houbie/lesscss-gradle-plugin.git'
+                        connection 'scm:git@github.com:houbie/lesscss-gradle-plugin.git'
+                        developerConnection 'scm:git@github.com:houbie/lesscss-gradle-plugin.git'
+                    }
+
+                    licenses {
+                        license {
+                            name 'The Apache Software License, Version 2.0'
+                            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                            distribution 'repo'
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id 'houbie'
+                            name 'Ivo Houbrechts'
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+//********* release plugin *********
+release {
+    versionPropertyFile = 'version.txt'
+    versionPatterns = [
+            // increment last digit before '-less-'
+            /(\d+)-less-(.+$)/: { matcher, project -> matcher.replaceAll("${(matcher[0][1] as int) + 1}-less-${matcher[0][2]}") }
+    ]
+}
+
+task updateReadme(description: 'Updates all the occurrences of the version in README.adoc') << {
+    File readme = file('README.adoc')
+    //replace all occurrences of x.y.z-less-a.b.c with the new release version
+    def releaseVersion = "${project['release.oldVersion']}".replaceAll('-SNAPSHOT', '')
+    readme.text = (readme.text =~ /\d\.\d(\.\d)?-less-\d\.\d(\.\d)?(-SNAPSHOT)?/).replaceAll("${releaseVersion}")
+}
+
+release.dependsOn clean
+createReleaseTag.dependsOn uploadArchives
+commitNewVersion.dependsOn updateReadme

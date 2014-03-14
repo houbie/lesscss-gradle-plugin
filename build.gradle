@@ -1,8 +1,17 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.github.townsfolk:gradle-release:1.2'
+    }
+}
+
 apply plugin: 'groovy'
 apply plugin: 'maven'
 apply plugin: 'signing'
-
 apply plugin: 'release'
+
 
 version = file('version.txt').text.split('=')[1].trim()
 group = 'com.github.houbie'
@@ -12,13 +21,14 @@ targetCompatibility = 1.6
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {
     compile localGroovy()
     compile gradleApi()
-	compile 'com.github.houbie:lesscss:1.1.0-less-1.7.0'
-    testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
+	compile 'com.github.houbie:lesscss:1.1.1-less-1.7.0-SNAPSHOT'
+    testCompile 'org.spockframework:spock-core:0.7-groovy-1.8'
 }
 
 jar {

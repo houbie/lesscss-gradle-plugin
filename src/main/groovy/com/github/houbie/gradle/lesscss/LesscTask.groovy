@@ -78,9 +78,10 @@ class LesscTask extends SourceTask {
             if (visitDetail.directory) {
                 visitDetail.relativePath.getFile(getDest()).mkdir()
             } else {
-                if (!isLess(visitDetail))
+                if (!isLess(visitDetail)) {
                     logger.debug("Copying less resource ${visitDetail.file.absolutePath} to ${getDest().absolutePath}")
-                visitDetail.copyTo(visitDetail.relativePath.getFile(getDest()))
+                    visitDetail.copyTo(visitDetail.relativePath.getFile(getDest()))
+                }
             }
         }
     }
@@ -92,7 +93,7 @@ class LesscTask extends SourceTask {
     protected CompilationTask createCompilationTask() {
         def lessEngine = LessCompilationEngineFactory.create(engine, lesscExecutable)
         Reader customJavaScriptReader = customJavaScript ? new StringReader(customJavaScript) : null
-        def compilationTask = new CompilationTask(lessEngine, (Reader)customJavaScriptReader, new File(project.buildDir, 'lessc'));
+        def compilationTask = new CompilationTask(lessEngine, (Reader) customJavaScriptReader, new File(project.buildDir, 'lessc'));
         compilationTask.setCompilationUnits(createCompilationUnits())
         return compilationTask
     }

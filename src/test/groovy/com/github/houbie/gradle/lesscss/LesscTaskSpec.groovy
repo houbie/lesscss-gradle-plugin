@@ -1,5 +1,6 @@
 package com.github.houbie.gradle.lesscss
 
+import com.github.houbie.lesscss.LessParseException
 import com.github.houbie.lesscss.Options
 import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
@@ -12,10 +13,10 @@ class LesscTaskSpec extends Specification {
     Project project
 
     def setup() {
-        projectDir.delete()
         projectDir.mkdirs()
         project = ProjectBuilder.builder().withProjectDir(projectDir).build()
         project.apply plugin: 'lesscss'
+        project.delete('out')
     }
 
     def 'lessc task defaults'() {
@@ -63,13 +64,47 @@ class LesscTaskSpec extends Specification {
             includePaths = [projectRelativelessDir]
             source = projectRelativelessDir
             include 'import.less'
+            include '*resource.*'
         }
 
         project.tasks.findByName('lessc').run()
 
         expect:
+        new File(projectDir, 'out').list().sort() == ['basic-resource.txt', 'basic.css', 'import.css']
         new File(projectDir, 'out/basic.css').text == new File(lessDir, 'basic.css').text
         new File(projectDir, 'out/import.css').text == new File(lessDir, 'import.css').text
+    }
 
+    def 'compile broken less'() {
+        project.lessc {
+            dest = 'out'
+            source = projectRelativelessDir
+            include 'broken.less'
+        }
+
+        when:
+        project.tasks.findByName('lessc').run()
+
+        then:
+        LessParseException e = thrown()
+        e.message == "less parse exception: missing closing `}`\n" +
+                "in ${new File('src/test/resources/less/broken.less').absolutePath} at line 1\n" +
+                "extract\n" +
+                "#broken less {"
+    }
+
+    def 'compile and minify'() {
+        project.lessc {
+            options.minify = true
+            dest = 'out'
+            source = projectRelativelessDir
+            include 'minify.less'
+        }
+
+        when:
+        project.tasks.findByName('lessc').run()
+
+        then:
+        new File(projectDir, 'out/minify.css').text == new File(lessDir, 'minify.css').text
     }
 }

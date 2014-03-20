@@ -1,7 +1,6 @@
 buildscript {
     repositories {
         mavenCentral()
-        mavenLocal() //TODO remove
     }
     dependencies {
         classpath 'com.github.townsfolk:gradle-release:1.2'
@@ -17,12 +16,11 @@ apply plugin: 'release'
 version = file('version.txt').text.split('=')[1].trim()
 group = 'com.github.houbie'
 
-sourceCompatibility = 1.6
-targetCompatibility = 1.6
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
 
 repositories {
     mavenCentral()
-    mavenLocal()
 }
 
 dependencies {

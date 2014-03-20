@@ -18,3 +18,7 @@ lessc {
 }
 
 task dependsOnLessc(dependsOn: lessc)
+
+lesscDaemon {
+    interval = 100
+}

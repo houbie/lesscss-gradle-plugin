@@ -54,7 +54,7 @@ class SourceDirsTaskSpec extends Specification {
             sourceDir 'src/test/resources/less', 'src/test/resources/customizedless', 'doesNotExist'
 
             include 'basic.*', 'import1/**/import*.less'
-            exclude '*.css'
+            exclude '*.css', '*.map'
         }
 
         expect:

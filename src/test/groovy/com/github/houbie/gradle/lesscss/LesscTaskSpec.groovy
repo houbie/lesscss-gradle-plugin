@@ -2,7 +2,9 @@ package com.github.houbie.gradle.lesscss
 
 import com.github.houbie.lesscss.LessParseException
 import com.github.houbie.lesscss.Options
+import com.github.houbie.lesscss.builder.CompilationUnit
 import org.gradle.api.Project
+import org.gradle.api.file.FileTreeElement
 import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Specification
 
@@ -115,5 +117,27 @@ class LesscTaskSpec extends Specification {
 
         then:
         new File(projectDir, 'out/minify.css').text == new File(lessDir, 'minify.css').text
+    }
+
+    def 'preCompile closure'() {
+        project.lessc {
+            destinationDir = project.file('out')
+            sourceDir projectRelativeLessDir
+            include 'import.less', 'basic.less'
+
+            preCompile { FileTreeElement src, CompilationUnit unit ->
+                unit.destination = project.file("precompile/${src.name}.css")
+                unit.options.sourceMap = true
+                unit.sourceMapFile = project.file("precompile/${src.name}.map")
+            }
+        }
+
+        project.tasks.findByName('lessc').run()
+
+        expect:
+        new File(projectDir, 'precompile/basic.less.css').text == new File(lessDir, 'basic.css').text + "/*# sourceMappingURL=${project.file('precompile/basic.less.map')} */"
+        new File(projectDir, 'precompile/import.less.css').text == new File(lessDir, 'import.css').text + "/*# sourceMappingURL=${project.file('precompile/import.less.map')} */"
+        new File(projectDir, 'precompile/basic.less.map').text == new File(lessDir, 'basic.map').text
+        new File(projectDir, 'precompile/import.less.map').text == new File(lessDir, 'import.map').text
     }
 }

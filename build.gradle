@@ -1,6 +1,7 @@
 buildscript {
     repositories {
         mavenCentral()
+        mavenLocal() //TODO remove
     }
     dependencies {
         classpath 'com.github.townsfolk:gradle-release:1.2'
@@ -27,7 +28,7 @@ repositories {
 dependencies {
     compile localGroovy()
     compile gradleApi()
-	compile 'com.github.houbie:lesscss:1.2.0-less-1.7.0'
+	compile 'com.github.houbie:lesscss:1.2.1-less-1.7.0'
     testCompile 'org.spockframework:spock-core:0.7-groovy-1.8'
 }
 

@@ -1,6 +1,6 @@
 LESS CSS Gradle Plugin
 =========================
-:version: 0.1-less-1.7.0-SNAPSHOT
+:version: 0.5-less-1.7.0
 
 A gradle plugin for compiling LESS to CSS
 
@@ -16,7 +16,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.github.houbie:lesscss-gradle-plugin:1.2.0-less-1.7.0'
+        classpath 'com.github.houbie:lesscss-gradle-plugin:0.5-less-1.7.0'
     }
 }
 

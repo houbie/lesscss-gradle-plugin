@@ -7,7 +7,6 @@ import spock.lang.Specification
 class IntegrationSpec extends Specification {
 
     File projectDir = new File('build/tmp/integrationTestProject')
-    File lessDir = new File('src/test/resources/less')
     File customizedless = new File(projectDir, 'customizedless')
     ProjectConnection projectConnection
 
@@ -32,14 +31,32 @@ class IntegrationSpec extends Specification {
         projectConnection.newBuild().forTasks('dependsOnLessc').run();
 
         then:
-        result.text == new File(lessDir, 'import.css').text
+        result.text == new File(customizedless, 'import.css').text
 
         when:
         sleep(1000)
-        customImported1Less.text = customImported1Less.text + '#imported1 {color: black;}'
+        customImported1Less.text = customImported1Less.text.replace('pink', 'deeppink')
         projectConnection.newBuild().forTasks("dependsOnLessc").run();
 
         then:
-        result.text == new File(customizedless, 'import.css')
+        result.text == new File(customizedless, 'import.css').text.replace('pink', 'deeppink')
+    }
+
+    def 'task is up-to-date when ran without changes'() {
+        File result = new File(projectDir, 'out/import.css')
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream()
+
+        when:
+        projectConnection.newBuild().forTasks('dependsOnLessc').run();
+
+        then:
+        result.text == new File(customizedless, 'import.css').text
+
+        when:
+        sleep(1000)
+        projectConnection.newBuild().forTasks("dependsOnLessc").setStandardOutput(stdout).run();
+
+        then:
+        stdout.toString().contains(':lessc UP-TO-DATE\n:dependsOnLessc UP-TO-DATE')
     }
 }

@@ -32,13 +32,14 @@ class LesscTaskSpec extends Specification {
         lesscTask.encoding == null
     }
 
-    def 'configure lessc task with lessCss extension'() {
-        project.lessCss {
+    def 'configured lessc task'() {
+        project.lessc {
             options.rootpath = 'myRootpath'
             engine = 'myEngine'
             lesscExecutable = 'myLesscExecutable'
             customJavaScript = 'myCustomJs'
             encoding = 'myEncoding'
+            destinationDir = 'out'
         }
 
         def lesscTask = project.tasks.findByName('lessc')
@@ -49,38 +50,10 @@ class LesscTaskSpec extends Specification {
         lesscTask.lesscExecutable == 'myLesscExecutable'
         lesscTask.customJavaScript == 'myCustomJs'
         lesscTask.encoding == 'myEncoding'
-    }
-
-    def 'overwrite lessCss extension in task'() {
-        project.lessCss {
-            options.rootpath = 'myRootpath'
-            engine = 'myEngine'
-            lesscExecutable = 'myLesscExecutable'
-            customJavaScript = 'myCustomJs'
-            encoding = 'myEncoding'
-            destinationDir = 'out'
-        }
-        project.lessc {
-            engine = 'anotherEngine'
-            options.rootpath = 'anotherRootpath'
-        }
-
-        def lesscTask = project.tasks.findByName('lessc')
-
-        expect:
-        lesscTask.options == new Options(rootpath: 'anotherRootpath')
-        lesscTask.engine == 'anotherEngine'
-        lesscTask.lesscExecutable == 'myLesscExecutable'
-        lesscTask.customJavaScript == 'myCustomJs'
-        lesscTask.encoding == 'myEncoding'
-        lesscTask.dest.absoluteFile == new File(projectDir, 'out').absoluteFile
+        lesscTask.destinationDir.absoluteFile == new File(projectDir, 'out').absoluteFile
     }
 
     def 'create custom lessc task'() {
-        project.lessCss {
-            options.rootpath = 'ignored'
-            engine = 'ignored'
-        }
         project.task(type: LesscTask, 'customLessc') {
             options.rootpath = 'customRootpath'
         }

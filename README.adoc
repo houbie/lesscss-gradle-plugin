@@ -3,3 +3,30 @@ LESS CSS Gradle Plugin
 :version: 0.1-less-1.7.0-SNAPSHOT
 
 A gradle plugin for compiling LESS to CSS
+
+The plugin is available in the maven central repository:
+
+[source,java]
+----
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.github.houbie:lesscss-gradle-plugin:1.2.0-less-1.7.0'
+    }
+}
+----
+
+Example usage:
+
+[source,java]
+----
+lessc {
+    options.minify = true
+    destinationDir = 'out'
+    sourceDir = 'web-app/less'
+    include '**/*.less', '**/*.png'
+}
+----

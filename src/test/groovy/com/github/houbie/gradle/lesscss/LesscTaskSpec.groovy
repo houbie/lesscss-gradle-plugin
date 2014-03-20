@@ -7,8 +7,8 @@ import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Specification
 
 class LesscTaskSpec extends Specification {
-    File projectDir = new File('build/tmp/testproject')
-    String projectRelativelessDir = '../../../src/test/resources/less'
+    File projectDir = new File('build/tmp/testProject')
+    String projectRelativeLessDir = '../../../src/test/resources/less'
     File lessDir = new File('src/test/resources/less')
     Project project
 
@@ -30,19 +30,15 @@ class LesscTaskSpec extends Specification {
         lesscTask.lesscExecutable == null
         lesscTask.customJavaScript == null
         lesscTask.encoding == null
-        lesscTask.sourceLocations == []
-        lesscTask.includePaths == []
     }
 
-    def 'configured lessc task'() {
-        project.lessc {
+    def 'configure lessc task with lessCss extension'() {
+        project.lessCss {
             options.rootpath = 'myRootpath'
             engine = 'myEngine'
             lesscExecutable = 'myLesscExecutable'
             customJavaScript = 'myCustomJs'
             encoding = 'myEncoding'
-            sourceLocations = ['mySourceLocation']
-            includePaths = ['.', projectRelativelessDir]
         }
 
         def lesscTask = project.tasks.findByName('lessc')
@@ -53,17 +49,57 @@ class LesscTaskSpec extends Specification {
         lesscTask.lesscExecutable == 'myLesscExecutable'
         lesscTask.customJavaScript == 'myCustomJs'
         lesscTask.encoding == 'myEncoding'
-        lesscTask.sourceLocations == ['mySourceLocation']
-        lesscTask.includePaths == [projectDir, lessDir]*.absoluteFile
+    }
+
+    def 'overwrite lessCss extension in task'() {
+        project.lessCss {
+            options.rootpath = 'myRootpath'
+            engine = 'myEngine'
+            lesscExecutable = 'myLesscExecutable'
+            customJavaScript = 'myCustomJs'
+            encoding = 'myEncoding'
+            destinationDir = 'out'
+        }
+        project.lessc {
+            engine = 'anotherEngine'
+            options.rootpath = 'anotherRootpath'
+        }
+
+        def lesscTask = project.tasks.findByName('lessc')
+
+        expect:
+        lesscTask.options == new Options(rootpath: 'anotherRootpath')
+        lesscTask.engine == 'anotherEngine'
+        lesscTask.lesscExecutable == 'myLesscExecutable'
+        lesscTask.customJavaScript == 'myCustomJs'
+        lesscTask.encoding == 'myEncoding'
+        lesscTask.dest.absoluteFile == new File(projectDir, 'out').absoluteFile
+    }
+
+    def 'create custom lessc task'() {
+        project.lessCss {
+            options.rootpath = 'ignored'
+            engine = 'ignored'
+        }
+        project.task(type: LesscTask, 'customLessc') {
+            options.rootpath = 'customRootpath'
+        }
+
+        def customLesscTask = project.tasks.findByName('customLessc')
+
+        expect:
+        customLesscTask.options == new Options(rootpath: 'customRootpath')
+        customLesscTask.engine == null
+        customLesscTask.lesscExecutable == null
+        customLesscTask.customJavaScript == null
+        customLesscTask.encoding == null
     }
 
     def 'compile less files'() {
         project.lessc {
-            dest = 'out'
-            sourceLocations = ['basic.less']
-            includePaths = [projectRelativelessDir]
-            source = projectRelativelessDir
-            include 'import.less'
+            destinationDir = project.file('out')
+            sourceDir projectRelativeLessDir
+            include 'import.less', 'basic.less'
             include '*resource.*'
         }
 
@@ -77,8 +113,8 @@ class LesscTaskSpec extends Specification {
 
     def 'compile broken less'() {
         project.lessc {
-            dest = 'out'
-            source = projectRelativelessDir
+            destinationDir = project.file('out')
+            sourceDir = projectRelativeLessDir
             include 'broken.less'
         }
 
@@ -88,7 +124,7 @@ class LesscTaskSpec extends Specification {
         then:
         LessParseException e = thrown()
         e.message == "less parse exception: missing closing `}`\n" +
-                "in ${new File('src/test/resources/less/broken.less').absolutePath} at line 1\n" +
+                "in broken.less at line 1\n" +
                 "extract\n" +
                 "#broken less {"
     }
@@ -96,8 +132,8 @@ class LesscTaskSpec extends Specification {
     def 'compile and minify'() {
         project.lessc {
             options.minify = true
-            dest = 'out'
-            source = projectRelativelessDir
+            destinationDir = project.file('out')
+            sourceDir = projectRelativeLessDir
             include 'minify.less'
         }
 

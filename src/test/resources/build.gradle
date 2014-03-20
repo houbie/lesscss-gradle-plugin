@@ -1,0 +1,20 @@
+buildscript {
+    repositories {
+        mavenLocal() //TODO mavencentral
+    }
+
+    dependencies {
+        classpath files('../../classes/main')
+        classpath 'com.github.houbie:lesscss:1.2.0-less-1.7.0'
+    }
+}
+
+apply plugin: com.github.houbie.gradle.lesscss.LesscssPlugin
+
+lessc {
+    destinationDir = 'out'
+    sourceDir 'customizedless', 'less'
+    include 'import.less'
+}
+
+task dependsOnLessc(dependsOn: lessc)

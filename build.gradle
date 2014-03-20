@@ -27,7 +27,7 @@ repositories {
 dependencies {
     compile localGroovy()
     compile gradleApi()
-	compile 'com.github.houbie:lesscss:1.1.1-less-1.7.0-SNAPSHOT'
+	compile 'com.github.houbie:lesscss:1.2.0-less-1.7.0'
     testCompile 'org.spockframework:spock-core:0.7-groovy-1.8'
 }
 

@@ -5,67 +5,37 @@ import com.github.houbie.lesscss.builder.CompilationTask
 import com.github.houbie.lesscss.builder.CompilationUnit
 import com.github.houbie.lesscss.engine.LessCompilationEngineFactory
 import com.github.houbie.lesscss.resourcereader.FileSystemResourceReader
-import org.gradle.api.PathValidation
-import org.gradle.api.file.FileTree
 import org.gradle.api.file.FileVisitDetails
-import org.gradle.api.internal.file.collections.SimpleFileCollection
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.TaskAction
 
-class LesscTask extends SourceTask {
+class LesscTask extends SourceDirsTask {
     static final String NAME = 'lessc'
 
     @Input
+    @Optional
     Options options = new Options()
 
     @Input
+    @Optional
     String engine
 
     @Input
+    @Optional
     String lesscExecutable
 
     @Input
+    @Optional
     String customJavaScript
 
     @Input
+    @Optional
     String encoding
 
-    @Input
-    def sourceLocations = []
-
-    @Input
-    def includePaths = []
-
     @OutputDirectory
-    def dest
-
-    File getDest() {
-        project.file(dest)
-    }
-
-    Collection<File> getIncludePaths() {
-        includePaths.collect { project.file(it, PathValidation.DIRECTORY) }
-    }
-
-    @Override
-    @InputFiles
-    @SkipWhenEmpty
-    public FileTree getSource() {
-        super.getSource() + resolveSourceLocations()
-    }
-
-    FileTree resolveSourceLocations() {
-        List<File> files = []
-        for (location in sourceLocations) {
-            for (File path in getIncludePaths()) {
-                File file = new File(path, location.toString())
-                if (file.exists()) {
-                    files << file
-                    break
-                }
-            }
-        }
-        return new SimpleFileCollection(files).getAsFileTree()
-    }
+    def destinationDir
 
     @TaskAction
     def run() {
@@ -73,7 +43,7 @@ class LesscTask extends SourceTask {
         compile()
     }
 
-    protected void copyResources() {
+    void copyResources() {
         source.visit { FileVisitDetails visitDetail ->
             if (visitDetail.directory) {
                 visitDetail.relativePath.getFile(getDest()).mkdir()
@@ -86,37 +56,40 @@ class LesscTask extends SourceTask {
         }
     }
 
-    protected void compile() {
+    void compile() {
         createCompilationTask().execute()
     }
 
-    protected CompilationTask createCompilationTask() {
-        def lessEngine = LessCompilationEngineFactory.create(engine, lesscExecutable)
-        Reader customJavaScriptReader = customJavaScript ? new StringReader(customJavaScript) : null
-        def compilationTask = new CompilationTask(lessEngine, (Reader) customJavaScriptReader, new File(project.buildDir, 'lessc'));
+    CompilationTask createCompilationTask() {
+        def lessEngine = LessCompilationEngineFactory.create(getEngine(), getLesscExecutable())
+        Reader customJavaScriptReader = customJavaScript ? new StringReader(getCustomJavaScript()) : null
+        def compilationTask = new CompilationTask(lessEngine, (Reader) customJavaScriptReader, getCacheDir());
         compilationTask.setCompilationUnits(createCompilationUnits())
         return compilationTask
     }
 
-    protected Set<CompilationUnit> createCompilationUnits() {
+    File getCacheDir() {
+        new File(project.buildDir, 'lessc')
+    }
+
+    Set<CompilationUnit> createCompilationUnits() {
         def result = []
+        def resourceReader = new FileSystemResourceReader(getEncoding(), sourceDirs as File[])
         source.visit { FileVisitDetails visitDetail ->
             if (!visitDetail.directory && isLess(visitDetail)) {
                 def relativePathToCss = visitDetail.relativePath.replaceLastName(visitDetail.name.replace(".less", ".css"))
-                result << createCompilationUnit(visitDetail.file, relativePathToCss.getFile(getDest()))
+                def css = relativePathToCss.getFile(getDest())
+                result << new CompilationUnit(visitDetail.relativePath.getPathString(), css, getOptions(), resourceReader)
             }
         }
         return result as Set
     }
 
-    protected CompilationUnit createCompilationUnit(File source, File destination) {
-        def paths = includePaths << source.parentFile
-        def resourceReader = new FileSystemResourceReader(encoding, paths as File[])
-        return new CompilationUnit(source.path, destination, options, resourceReader)
+    File getDest() {
+        return project.file(getDestinationDir())
     }
 
     boolean isLess(resource) {
         resource.name.endsWith(".less")
     }
-
 }

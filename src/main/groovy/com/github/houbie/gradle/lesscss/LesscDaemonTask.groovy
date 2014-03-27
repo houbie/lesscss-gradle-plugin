@@ -30,22 +30,25 @@ class LesscDaemonTask extends DefaultTask {
 
     @TaskAction
     def run() {
+        CompilationTask compilationTask = lesscTask.createCompilationTask()
+        logger.info("starting lessc daemon...")
+        compilationTask.startDaemon(interval)
+
+        def msg = "Lessc daemon is running. Press enter to quit..."
+        if (System.console()) {
+            System.console().readLine(msg)
+        } else {
+            println msg
+            System.in.read()
+        }
+        compilationTask.stopDaemon()
+        logger.info("lessc daemon stopped")
+    }
+
+    LesscTask getLesscTask() {
         for (lesscTask in project.getTasksByName(lesscTaskName, false)) {
             if (lesscTask instanceof LesscTask) {
-                CompilationTask compilationTask = lesscTask.createCompilationTask()
-                logger.info("starting lessc daemon...")
-                compilationTask.startDaemon(interval)
-
-                def msg = "Lessc daemon is running. Press enter to quit..."
-                if (System.console()) {
-                    System.console().readLine(msg)
-                } else {
-                    println msg
-                    System.in.read()
-                }
-                compilationTask.stopDaemon()
-                logger.info("lessc daemon stopped")
-                return
+                return lesscTask
             }
         }
         throw new GradleException("Task $lesscTaskName cannot be found and is required to start the lessc daemon")

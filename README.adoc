@@ -5,7 +5,7 @@ Ivo Houbrechts <ivo@houbrechts-it.be>
 A gradle plugin for compiling LESS to CSS, compatible with http://lesscss.org[less] v1.7.0
 
 == Features
-The plugin is based on , which:
+The plugin is based on https://github.com/houbie/lesscss[lesscss], which:
 
 * can start a daemon that automatically compiles when the source is modified
 * caches information about imported source files to avoid unnecessary compilations
@@ -25,23 +25,22 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.github.houbie:lesscss-gradle-plugin:0.5-less-1.7.0'
+        classpath "com.github.houbie:lesscss-gradle-plugin:0.5-less-1.7.0"
     }
 }
 
-apply plugin: 'lesscss'
+apply plugin: "lesscss"
 ----
 
 == lessc task
-
 The plugin adds a lessc task that requires a `destinationDir` and at least one `sourceDir` with optional include(s) and exclude(s):
 
 [source,java]
 ----
 lessc {
-    sourceDir 'customized/less', 'standard/less'
-    include '**/*.less', '**/*.js'
-    exclude 'imports/**/*'
+    sourceDir "customized/less", "standard/less"
+    include "**/*.less", "**/*.js"
+    exclude "imports/**/*"
     destinationDir = "$buildDir/css"
 }
 ----
@@ -53,11 +52,18 @@ lessc {
 * You can define additional tasks with type `com.github.houbie.gradle.lesscss.LesscTask`
 
 == Configuration
-
 The lesscss plugin supports all the options of the standard less:
 
 [source,java]
 ----
+lessc {
+    //plugin configuration
+    ////////////////////////
+    engine = "commandline" //Either 'rhino', 'nashorn' (requires jdk8) or 'commandline' (requires local node.js). Default: 'rhino'
+    lesscExecutable = "$userHome\\AppData\\Roaming\\npm\\lessc.cmd" //The executable to use for the commandline engine. Default: 'lessc' (typically OK on UN*X)
+    customJavaScript = file("custom.js").text //javascript that can provide functions to the less compiler. Default: null
+    encoding = "utf-8" //encoding used to read less files. Default: null (platform encoding)
+
     //standard LESS options
     /////////////////////////
     options.compress = true //Compress output by removing some whitespaces. Default: false
@@ -70,18 +76,74 @@ The lesscss plugin supports all the options of the standard less:
     options.ieCompat = false //Enable IE compatibility checks. Default: true
     options.javascriptEnabled = false //Enable JavaScript in less files. Default: true
     options.sourceMap = true //Outputs a v3 sourcemap.  Default: false
-    options.sourceMapRootpath = '/path/to/sourcemaps' //adds this path onto the sourcemap filename and less file paths. Default: null
+    options.sourceMapRootpath = "/path/to/sourcemaps" //adds this path onto the sourcemap filename and less file paths. Default: null
     options.sourceMapBasepath = file("$buildDir/css").absolutePath //Sets sourcemap base path (will be subtracted from generated paths). Default: null
     options.sourceMapLessInline = true //Puts the less files into the map instead of referencing them. Default: false
     options.sourceMapMapInline = true //Puts the map (and any less files) into the output css file. Default: false
-    options.sourceMapURL = 'http://localhost:8080/myApp/css/source.map' //The complete url and filename put in the less file. Default: null (calculated)
-    options.globalVars = ['btn-warning-bg': 'value'] //Defines a variable that can be referenced in the less. Default: empty Map
-    options.modifyVars = ['btn-warning-bg': 'value'] //Modifies a variable already declared in the less. Default: empty Map
+    options.sourceMapURL = "http://localhost:8080/myApp/css/source.map" //The complete url and filename put in the less file. Default: null (calculated)
+    options.globalVars = [fancyColor: "#123456"] //Defines a variable that can be referenced in the less. Default: empty Map
+    options.modifyVars = ["btn-warning-bg": "red"] //Modifies a variable already declared in the less. Default: empty Map
 
     //deprecated options
     options.optimizationLevel = 1 //Set the parser's optimization level. The lower the number, the less nodes it will create in the tree
     options.dumpLineNumbers= NONE //Outputs filename and line numbers in comments (COMMENTS) or in a fake media query (MEDIA_QUERY). Use source maps instead.
-
-    //plugin configuration
-    ////////////////////////
+}
 ----
+
+[NOTE]
+====
+When you generate source maps, the Chrome DevTools will automatically show the original less code i.s.o. the generated CSS
+when inspecting an element.
+====
+
+[NOTE]
+====
+The minify option is not compatible with source map generation!
+====
+
+== Per file configuration
+When different less files require different options (f.e. source map options), they can be configured with a `preCompileClosure`.
+This closure takesaccept 2 parameters:
+* org.gradle.api.file.FileTreeElement source : the less source file
+* com.github.houbie.lesscss.builder.CompilationUnit compilationUnit : contains all the options, destination file and source map destination file
+
+Example:
+[source,java]
+----
+lessc {
+    ...
+    preCompileClosure = { FileTreeElement src, CompilationUnit unit ->
+        unit.destination = project.file("css/${src.name}-less.css")
+        unit.options.sourceMap = true
+        unit.sourceMapFile = project.file("css/${src.name}-less.map")
+        unit.options.sourceMapBasepath =  unit.sourceMapFile.parentFile.absolutePath
+    }
+}
+----
+
+== lesscDaemon task
+When running `gradle lesscDaemon --info`, your less source files will be monitored for changes.
+During development, you only have to save your less file and refresh your browser. The CSS will be re-compiled automatically.
+
+The gradle process keeps running until you hit the enter key.
+
+[NOTE]
+====
+By adding the `--info` argument, you can see when compilation is started and finished.
+====
+
+The lesscDaemon has two configuration parameters:
+[source,java]
+----
+lesscDaemon {
+    lesscTaskName = "customLesscTask" //When you defined additional lessc tasks. Default: 'lessc'
+    interval = 200 //Scan interval in milliseconds. Default: 500
+}
+----
+
+== Performance
+The supported engines perform quite different:
+
+rhino:: although it's the fastest compiler in Java land, it still takes several seconds to compile the Twitter Bootstrap stylesheets.
+nashorn:: expected to be faster then rhino, but in fact a lot slower because the rhino less engine runs with the highest optimization level.
+commandline:: by far the fastest, but it requires node.js to be installed. Useful in dev mode. Typically compiles Twitter Bootstrap in less then a second.

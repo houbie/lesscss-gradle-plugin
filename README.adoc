@@ -1,12 +1,21 @@
-LESS CSS Gradle Plugin
-=========================
-:version: 0.5-less-1.7.0
+= LESS CSS Gradle Plugin
+Ivo Houbrechts <ivo@houbrechts-it.be>
+:revnumber: 0.5-less-1.7.0
 
-A gradle plugin for compiling LESS to CSS
+A gradle plugin for compiling LESS to CSS, compatible with http://lesscss.org[less] v1.7.0
 
-The plugin is available in the maven central repository.
+== Features
+The plugin is based on , which:
 
-Example usage:
+* can start a daemon that automatically compiles when the source is modified
+* caches information about imported source files to avoid unnecessary compilations
+* supports all LESS options
+* is the fastest Java based LESS compiler
+* supports multiple underlying engines: _rhino_, _nashorn_ and _node.js_
+
+
+== Installation
+The plugin is available in the maven central repository. You can add it to your gradle build as follows:
 
 [source,java]
 ----
@@ -21,11 +30,58 @@ buildscript {
 }
 
 apply plugin: 'lesscss'
+----
 
+== lessc task
+
+The plugin adds a lessc task that requires a `destinationDir` and at least one `sourceDir` with optional include(s) and exclude(s):
+
+[source,java]
+----
 lessc {
-    options.minify = true
-    destinationDir = 'out'
-    sourceDir = 'web-app/less'
-    include '**/*.less', '**/*.png'
+    sourceDir 'customized/less', 'standard/less'
+    include '**/*.less', '**/*.js'
+    exclude 'imports/**/*'
+    destinationDir = "$buildDir/css"
 }
+----
+
+* An (imported) less file is searched in the source directories in the order they are defined.
+  This makes it possible to keep your standard less files outside of your version control system, and only check-in the
+     less files that you actually want to override.
+* By not including or explicitly excluding the less sources that are only used as imports, you can avoid unnecessary compilations.
+* You can define additional tasks with type `com.github.houbie.gradle.lesscss.LesscTask`
+
+== Configuration
+
+The lesscss plugin supports all the options of the standard less:
+
+[source,java]
+----
+    //standard LESS options
+    /////////////////////////
+    options.compress = true //Compress output by removing some whitespaces. Default: false
+    options.strictImports = true //Force evaluation of imports. Default: false
+    options.rootpath = /root/path //Set rootpath for url rewriting in relative imports and urls. Works with or without the relative-urls option. Default: null
+    options.relativeUrls = true //Re-write relative urls to the base less file. Default: false
+    options.minify = true //Compress output using YUI minifier (standard LESS uses clean-css, which is only available in node.js). Default: false
+    options.strictMath = true //In strict mode, math requires brackets. Default: false
+    options.strictUnits = true //Disallow mixed units, e.g. 1px+1em or 1px*1px which have units that cannot be represented. Default: false
+    options.ieCompat = false //Enable IE compatibility checks. Default: true
+    options.javascriptEnabled = false //Enable JavaScript in less files. Default: true
+    options.sourceMap = true //Outputs a v3 sourcemap.  Default: false
+    options.sourceMapRootpath = '/path/to/sourcemaps' //adds this path onto the sourcemap filename and less file paths. Default: null
+    options.sourceMapBasepath = file("$buildDir/css").absolutePath //Sets sourcemap base path (will be subtracted from generated paths). Default: null
+    options.sourceMapLessInline = true //Puts the less files into the map instead of referencing them. Default: false
+    options.sourceMapMapInline = true //Puts the map (and any less files) into the output css file. Default: false
+    options.sourceMapURL = 'http://localhost:8080/myApp/css/source.map' //The complete url and filename put in the less file. Default: null (calculated)
+    options.globalVars = ['btn-warning-bg': 'value'] //Defines a variable that can be referenced in the less. Default: empty Map
+    options.modifyVars = ['btn-warning-bg': 'value'] //Modifies a variable already declared in the less. Default: empty Map
+
+    //deprecated options
+    options.optimizationLevel = 1 //Set the parser's optimization level. The lower the number, the less nodes it will create in the tree
+    options.dumpLineNumbers= NONE //Outputs filename and line numbers in comments (COMMENTS) or in a fake media query (MEDIA_QUERY). Use source maps instead.
+
+    //plugin configuration
+    ////////////////////////
 ----

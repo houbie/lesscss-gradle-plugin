@@ -146,11 +146,6 @@ lesscDaemon {
 
 [TIP]
 ====
-By adding the `--info` argument, you can see when compilation is started and finished.
-====
-
-[TIP]
-====
 Using the default engine in the `lessc` task makes sure that your builds always use the same LESS version and that your builds are reproducible.
 Use the `commandline` engine in the `lesscDaemon` task to speed up development of style sheets.
 ====

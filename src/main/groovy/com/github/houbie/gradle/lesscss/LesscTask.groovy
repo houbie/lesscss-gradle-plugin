@@ -58,8 +58,6 @@ class LesscTask extends SourceDirsTask {
         project.file(destinationDir)
     }
 
-    @Input
-    @Optional
     Closure preCompileClosure
 
     void preCompile(Closure preCompileClosure) {

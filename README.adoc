@@ -90,13 +90,13 @@ lessc {
 }
 ----
 
-[NOTE]
+[TIP]
 ====
 When you generate source maps, the Chrome DevTools will automatically show the original less code i.s.o. the generated CSS
 when inspecting an element.
 ====
 
-[NOTE]
+[WARNING]
 ====
 The minify option is not compatible with source map generation!
 ====
@@ -127,19 +127,33 @@ During development, you only have to save your less file and refresh your browse
 
 The gradle process keeps running until you hit the enter key.
 
-[NOTE]
+[TIP]
 ====
 By adding the `--info` argument, you can see when compilation is started and finished.
 ====
 
-The lesscDaemon has two configuration parameters:
+The lesscDaemon has two configuration parameters: `lesscTaskName` and `interval`.
+It also allows to override `engine` and `lesscExecutable`.
 [source,java]
 ----
 lesscDaemon {
     lesscTaskName = "customLesscTask" //When you defined additional lessc tasks. Default: 'lessc'
     interval = 200 //Scan interval in milliseconds. Default: 500
+    engine = "commandline"
+    lesscExecutable = "/opt/local/bin/lessc"
 }
 ----
+
+[TIP]
+====
+By adding the `--info` argument, you can see when compilation is started and finished.
+====
+
+[TIP]
+====
+Using the default engine in the `lessc` task makes sure that your builds always use the same LESS version and that your builds are reproducible.
+Use the `commandline` engine in the `lesscDaemon` task to speed up development of style sheets.
+====
 
 == Performance
 The supported engines perform quite different:

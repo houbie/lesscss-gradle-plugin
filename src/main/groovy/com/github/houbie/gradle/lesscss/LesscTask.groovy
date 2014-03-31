@@ -91,10 +91,10 @@ class LesscTask extends SourceDirsTask {
 
     void compile() {
         logger.debug("execute less CompilationTask")
-        createCompilationTask().execute()
+        createCompilationTask(engine, lesscExecutable).execute()
     }
 
-    CompilationTask createCompilationTask() {
+    CompilationTask createCompilationTask(String engine, String lesscExecutable) {
         logger.debug("create less CompilationTask")
         def lessEngine = LessCompilationEngineFactory.create(engine, lesscExecutable)
         Reader customJavaScriptReader = customJavaScript ? new StringReader(customJavaScript) : null

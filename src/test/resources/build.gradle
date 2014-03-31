@@ -21,4 +21,6 @@ task dependsOnLessc(dependsOn: lessc)
 
 lesscDaemon {
     interval = 100
+    engine = 'rhino'
+    lesscExecutable = 'ignored'
 }

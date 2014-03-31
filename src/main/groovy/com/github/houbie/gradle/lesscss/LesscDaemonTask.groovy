@@ -28,9 +28,13 @@ class LesscDaemonTask extends DefaultTask {
 
     long interval = 500
 
+    String engine
+
+    String lesscExecutable
+
     @TaskAction
     def run() {
-        CompilationTask compilationTask = lesscTask.createCompilationTask()
+        CompilationTask compilationTask = lesscTask.createCompilationTask(engine, lesscExecutable)
         logger.info("starting lessc daemon...")
         compilationTask.startDaemon(interval)
 

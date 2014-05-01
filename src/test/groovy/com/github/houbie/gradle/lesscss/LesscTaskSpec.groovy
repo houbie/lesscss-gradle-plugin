@@ -86,6 +86,22 @@ class LesscTaskSpec extends Specification {
         customLesscTask.encoding == null
     }
 
+    def 'compile less files in subdirectory'() {
+        project.lessc {
+            destinationDir = project.file('out')
+            sourceDir '../../../src/test/resources'
+            include '**/import.less', '**/basic.less'
+            include '**/*resource.*'
+        }
+
+        project.tasks.findByName('lessc').run()
+
+        expect:
+        new File(projectDir, 'out/less').list().sort() == ['basic-resource.txt', 'basic.css', 'import.css', 'import1']
+        new File(projectDir, 'out/less/basic.css').text == new File(lessDir, 'basic.css').text
+        new File(projectDir, 'out/less/import.css').text == new File(lessDir, 'import.css').text
+    }
+
     def 'compile less files'() {
         project.lessc {
             destinationDir = project.file('out')
@@ -97,7 +113,7 @@ class LesscTaskSpec extends Specification {
         project.tasks.findByName('lessc').run()
 
         expect:
-        new File(projectDir, 'out').list().sort() == ['basic-resource.txt', 'basic.css', 'import.css']
+        new File(projectDir, 'out').list() == ['basic-resource.txt', 'basic.css', 'import.css']
         new File(projectDir, 'out/basic.css').text == new File(lessDir, 'basic.css').text
         new File(projectDir, 'out/import.css').text == new File(lessDir, 'import.css').text
     }

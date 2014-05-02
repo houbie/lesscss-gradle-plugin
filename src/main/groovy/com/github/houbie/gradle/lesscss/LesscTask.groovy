@@ -107,7 +107,6 @@ class LesscTask extends SourceDirsTask {
 
     Set<CompilationUnit> createCompilationUnits() {
         def result = []
-        def resourceReader = new FileSystemResourceReader(encoding, sourceDirs as File[])
         source.visit { FileVisitDetails visitDetail ->
             if (!visitDetail.directory && isLess(visitDetail)) {
                 def relativePathToCss = visitDetail.relativePath.replaceLastName(visitDetail.name.replace(".less", ".css"))
@@ -116,6 +115,8 @@ class LesscTask extends SourceDirsTask {
                 def sourceMapDest = relativePathToSourceMap.getFile(getDestinationDir())
                 def src = visitDetail.relativePath.getPathString()
                 logger.debug("Creating less CompilationUnit src: $src, dest $dest")
+                def includePaths = (visitDetail.file.parentFile) ? sourceDirs + visitDetail.file.parentFile : sourceDirs
+                def resourceReader = new FileSystemResourceReader(encoding, includePaths as File[])
                 CompilationUnit compilationUnit = new CompilationUnit(src, dest, new Options(options), resourceReader, sourceMapDest)
                 if (preCompileClosure) {
                     preCompileClosure(visitDetail, compilationUnit)

@@ -23,6 +23,7 @@ import org.gradle.api.Project
 import org.gradle.api.file.FileTreeElement
 import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class LesscTaskSpec extends Specification {
     File projectDir = new File('build/tmp/testProject')
@@ -86,20 +87,27 @@ class LesscTaskSpec extends Specification {
         customLesscTask.encoding == null
     }
 
-    def 'compile less files in subdirectory'() {
+    @Unroll
+    def 'compile less files in subdirectory for #engineName engine'() {
+        when:
         project.lessc {
             destinationDir = project.file('out')
             sourceDir '../../../src/test/resources'
             include '**/import.less', '**/basic.less'
             include '**/*resource.*'
+            engine = engineName
+            lesscExecutable = System.getProperty('lesscExecutable', 'lessc')
         }
 
         project.tasks.findByName('lessc').run()
 
-        expect:
+        then:
         new File(projectDir, 'out/less').list().sort() == ['basic-resource.txt', 'basic.css', 'import.css', 'import1']
         new File(projectDir, 'out/less/basic.css').text == new File(lessDir, 'basic.css').text
         new File(projectDir, 'out/less/import.css').text == new File(lessDir, 'import.css').text
+
+        where:
+        engineName << ['rhino', 'commandline']
     }
 
     def 'compile less files'() {

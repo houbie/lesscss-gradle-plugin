@@ -2,6 +2,17 @@
 Ivo Houbrechts <ivo@houbrechts-it.be>
 :revnumber: 1.0.3-less-1.7.0
 
+[WARNING]
+====
+Active development of this project has stopped
+
+There are two alternatives:
+
+    * https://plugins.gradle.org/plugin/com.bertramlabs.plugins.asset-pipeline[asset pipeline gradle plugin]
+    * use the original javascript lesscss via the gradle grunt or gulp plugins
+
+====
+
 A gradle plugin for compiling LESS to CSS, compatible with http://lesscss.org[less] v1.7.0
 
 == Features
